@@ -58,12 +58,12 @@ class AngleInterpolationAgent(PIDAgent):
 
             #calk B(current_time)
             t = (current_time - keyframes[1][i][k0]) / (keyframes[1][i][(k0 + 1)] - keyframes[1][i][k0])  # t=(s-s0)/(s1-s0)
-            if k > k0 >= 0 and 1 >= t >= 0: #check if we are at last elem or first
+            if k >= k0 >= 0 and 1 >= t >= 0: #check if we are at last elem or first
                 p0 = keyframes[2][i][k0][0]
                 p1 = keyframes[2][i][k0][2][1]
                 p2 = keyframes[2][i][k0+1][1][1]
                 p3 = keyframes[2][i][k0+1][0]
- 
+
                 print(t)
                 target_joints[joint] = np.power(1-t, 3) * p0 + 3 * np.power(1-t, 2) * t * p1 + 3 * (1-t) * np.power(t, 2) * p2 + np.power(t, 3) * p3
 
