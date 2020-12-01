@@ -22,14 +22,16 @@
 
 from pid import PIDAgent
 from keyframes import hello
-
+import numpy as np
 
 class AngleInterpolationAgent(PIDAgent):
+    global start_time
     def __init__(self, simspark_ip='localhost',
                  simspark_port=3100,
                  teamname='DAInamite',
                  player_id=0,
                  sync_mode=True):
+        self.start_time=0
         super(AngleInterpolationAgent, self).__init__(simspark_ip, simspark_port, teamname, player_id, sync_mode)
         self.keyframes = ([], [], [])
 
@@ -40,7 +42,34 @@ class AngleInterpolationAgent(PIDAgent):
 
     def angle_interpolation(self, keyframes, perception):
         target_joints = {}
+        if self.start_time == 0:
+            self.start_time = perception.time
+
+        i = 0
+        current_time = perception.time-self.start_time
+        for joint in keyframes[0]:
+            k = 0
+            k0 = 0
+            for time in keyframes[1][i]:
+                if time >= current_time: #get index of p0
+                    k0 = k-1
+                    break
+                k += 1
+
+            #calk B(current_time)
+            t = (current_time - keyframes[1][i][k0]) / (keyframes[1][i][(k0 + 1)] - keyframes[1][i][k0])  # t=(s-s0)/(s1-s0)
+            if k > k0 >= 0 and 1 >= t >= 0: #check if we are at last elem or first
+                p0 = keyframes[2][i][k0][0]
+                p1 = keyframes[2][i][k0][2][1]
+                p2 = keyframes[2][i][k0+1][1][1]
+                p3 = keyframes[2][i][k0+1][0]
+ 
+                print(t)
+                target_joints[joint] = np.power(1-t, 3) * p0 + 3 * np.power(1-t, 2) * t * p1 + 3 * (1-t) * np.power(t, 2) * p2 + np.power(t, 3) * p3
+
+            i += 1
         # YOUR CODE HERE
+
 
         return target_joints
 
