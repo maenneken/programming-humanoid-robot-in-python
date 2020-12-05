@@ -44,7 +44,6 @@ class AngleInterpolationAgent(PIDAgent):
         target_joints = {}
         if self.start_time == 0:
             self.start_time = perception.time
-
         i = 0
         current_time = perception.time-self.start_time
         for joint in keyframes[0]:
@@ -58,7 +57,7 @@ class AngleInterpolationAgent(PIDAgent):
 
             #calk B(current_time)
             t = (current_time - keyframes[1][i][k0]) / (keyframes[1][i][(k0 + 1)] - keyframes[1][i][k0])  # t=(s-s0)/(s1-s0)
-            if k >= k0 >= 0 and 1 >= t >= 0: #check if we are at last elem or first
+            if  1 >= t >= 0: #check if we are between points
                 p0 = keyframes[2][i][k0][0]
                 p1 = keyframes[2][i][k0][2][1] + p0
                 p3 = keyframes[2][i][k0 + 1][0]
