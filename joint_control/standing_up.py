@@ -49,7 +49,7 @@ class TestStandingUpAgent(StandingUpAgent):
         self.stiffness_on_off_time = 0
         self.stiffness_on_cycle = 11 # in seconds
         self.stiffness_off_cycle = 3 # in seconds
-        self.time=3.02
+        self.time=4.02
 
     def think(self, perception):
         action = super(TestStandingUpAgent, self).think(perception)
