@@ -65,7 +65,8 @@ class AngleInterpolationAgent(PIDAgent):
 
 
                 target_joints[joint] = np.power(1-t, 3) * p0 + 3 * np.power(1-t, 2) * t * p1 + 3 * (1-t) * np.power(t, 2) * p2 + np.power(t, 3) * p3
-
+                if(joint=='LHipYawPitch'):
+                    target_joints['RHipYawPitch']= target_joints[joint]
             i += 1
         # YOUR CODE HERE
 
