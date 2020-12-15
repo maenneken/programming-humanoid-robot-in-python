@@ -35,8 +35,13 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         self.transforms = {n: identity(4) for n in self.joint_names}
 
         # chains defines the name of chain and joints of the chain
-        self.chains = {'Head': ['HeadYaw', 'HeadPitch']
-                       # YOUR CODE HERE
+        self.chains = {'Head': ['HeadYaw', 'HeadPitch'],
+                       'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw','LElbowRoll','LWristYaw', 'LHand'],
+                       'LLeg': ['LHipYawPitch', 'LHipRoll', 'LHipPitch', 'LKneePitch', 'LAnklePitch','RAnkleRoll'],
+                       'RLeg': ['RHipYawPitch', 'RHipRoll', 'RHipPitch', 'RKneePitch', 'RAnklePitch','LAnkleRoll'],
+                       'RArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw','RElbowRoll','RWristYaw', 'RHand'],
+
+
                        }
 
     def think(self, perception):
@@ -52,8 +57,42 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         :rtype: 4x4 matrix
         '''
         T = identity(4)
-        # YOUR CODE HERE
+        s=sin(joint_angle)
+        c=cos(joint_angle)
+        if('Roll' in joint_name):#x-Rotation
+            T[1]=np.array([0,c,-s,0])
+            T[2]=np.array([0,s,c,0])
+        if('Pitch' in joint_name):#y-Rotation
+            T[0]=np.array([c,0,s,0])
+            T[2]=np.array([-s,0,c,0])
+        if('Yaw' in joint_name): #z-Rotation
+            T[0]=np.array([c,s,0,0])
+            T[1]=np.array([-s,c,0,0])
 
+        #offsets
+        #head
+        if(joint_name=='HeadYaw'):
+            T[3]=np.array(0,0,126.5,1)
+        #Arms
+        if(joint_name=='LShoulderPitch'):
+            T[3]=np.array(0,98,100,1)
+        if(joint_name=='RShoulderPitch'):
+            T[3]=np.array(0,-98,100,1)
+        if('ElbowYaw'in joint_name):
+            T[3]=np.array(105,15,0,1)
+        if('WrisYaw'in joint_name):
+            T[3]=np.array(55.95,0,0,1)
+        #Legs
+        if(joint_name=='LHipYawPitch'):
+            T[3]=np.array(0,50,-85,1)
+        if(joint_name=='RHipYawPitch'):
+            T[3]=np.array(0,-50,-85,1)
+        if('KneePitch'in joint_name):
+            T[3]=np.array(0,0,-100,1)
+        if('AnklePitch'in joint_name):
+            T[3]=np.array(0,0,-102.9,1)
+
+        
         return T
 
     def forward_kinematics(self, joints):
