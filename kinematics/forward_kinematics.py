@@ -18,6 +18,7 @@
 # add PYTHONPATH
 import os
 import sys
+import numpy as np
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'joint_control'))
 
 from numpy.matlib import matrix, identity
@@ -57,8 +58,8 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         :rtype: 4x4 matrix
         '''
         T = identity(4)
-        s=sin(joint_angle)
-        c=cos(joint_angle)
+        s=np.sin(joint_angle)
+        c=np.cos(joint_angle)
         if('Roll' in joint_name):#x-Rotation
             T[1]=np.array([0,c,-s,0])
             T[2]=np.array([0,s,c,0])
@@ -72,27 +73,27 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         #offsets
         #head
         if(joint_name=='HeadYaw'):
-            T[3]=np.array(0,0,126.5,1)
+            T[3]=np.array([0,0,126.5,1])
         #Arms
         if(joint_name=='LShoulderPitch'):
-            T[3]=np.array(0,98,100,1)
+            T[3]=np.array([0,98,100,1])
         if(joint_name=='RShoulderPitch'):
-            T[3]=np.array(0,-98,100,1)
+            T[3]=np.array([0,-98,100,1])
         if('ElbowYaw'in joint_name):
-            T[3]=np.array(105,15,0,1)
+            T[3]=np.array([105,15,0,1])
         if('WrisYaw'in joint_name):
-            T[3]=np.array(55.95,0,0,1)
+            T[3]=np.array([55.95,0,0,1])
         #Legs
         if(joint_name=='LHipYawPitch'):
-            T[3]=np.array(0,50,-85,1)
+            T[3]=np.array([0,50,-85,1])
         if(joint_name=='RHipYawPitch'):
-            T[3]=np.array(0,-50,-85,1)
+            T[3]=np.array([0,-50,-85,19])
         if('KneePitch'in joint_name):
-            T[3]=np.array(0,0,-100,1)
+            T[3]=np.array([0,0,-100,1])
         if('AnklePitch'in joint_name):
-            T[3]=np.array(0,0,-102.9,1)
+            T[3]=np.array([0,0,-102.9,1])
 
-        
+
         return T
 
     def forward_kinematics(self, joints):
@@ -103,11 +104,12 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         for chain_joints in self.chains.values():
             T = identity(4)
             for joint in chain_joints:
-                angle = joints[joint]
-                Tl = self.local_trans(joint, angle)
-                # YOUR CODE HERE
-
-                self.transforms[joint] = T
+                if(joints.get(joint)):
+                    angle = joints[joint]
+                    Tl = self.local_trans(joint, angle)
+                    # YOUR CODE HERE
+                    T=np.matmul(T,Tl)
+                    self.transforms[joint] = T
 
 if __name__ == '__main__':
     agent = ForwardKinematicsAgent()
