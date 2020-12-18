@@ -1,4 +1,4 @@
-'''In this exercise you need to implement forward kinematics for NAO robot
+'''In this exercise you need to implement forward kinematics for sNAO robot
 
 * Tasks:
     1. complete the kinematics chain definition (self.chains in class ForwardKinematicsAgent)
@@ -37,13 +37,13 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
 
         # chains defines the name of chain and joints of the chain
         self.chains = {'Head': ['HeadYaw', 'HeadPitch'],
-                       'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw','LElbowRoll','LWristYaw', 'LHand'],
+                       'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw','LElbowRoll'],
                        'LLeg': ['LHipYawPitch', 'LHipRoll', 'LHipPitch', 'LKneePitch', 'LAnklePitch','RAnkleRoll'],
                        'RLeg': ['RHipYawPitch', 'RHipRoll', 'RHipPitch', 'RKneePitch', 'RAnklePitch','LAnkleRoll'],
-                       'RArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw','RElbowRoll','RWristYaw', 'RHand'],
+                       'RArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw','RElbowRoll']}
 
 
-                       }
+
 
     def think(self, perception):
         self.forward_kinematics(perception.joint)
@@ -57,19 +57,24 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         :return: transformation
         :rtype: 4x4 matrix
         '''
+
         T = identity(4)
+        M = identity(4)
         s=np.sin(joint_angle)
         c=np.cos(joint_angle)
         if('Roll' in joint_name):#x-Rotation
-            T[1]=np.array([0,c,-s,0])
-            T[2]=np.array([0,s,c,0])
+            M[1]=np.array([0,c,-s,0])
+            M[2]=np.array([0,s,c,0])
+            T=np.matmul(T,M)
         if('Pitch' in joint_name):#y-Rotation
-            T[0]=np.array([c,0,s,0])
-            T[2]=np.array([-s,0,c,0])
+            M[0]=np.array([c,0,s,0])
+            M[2]=np.array([-s,0,c,0])
+            T=np.matmul(T,M)
         if('Yaw' in joint_name): #z-Rotation
-            T[0]=np.array([c,s,0,0])
-            T[1]=np.array([-s,c,0,0])
-
+            M[0]=np.array([c,s,0,0])
+            M[1]=np.array([-s,c,0,0])
+            T=np.matmul(T,M)
+        T=T.T
         #offsets
         #head
         if(joint_name=='HeadYaw'):
@@ -93,7 +98,6 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         if('AnklePitch'in joint_name):
             T[3]=np.array([0,0,-102.9,1])
 
-
         return T
 
     def forward_kinematics(self, joints):
@@ -104,7 +108,7 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         for chain_joints in self.chains.values():
             T = identity(4)
             for joint in chain_joints:
-                if(joints.get(joint)):
+                if(joints.get(joint)!=None):
                     angle = joints[joint]
                     Tl = self.local_trans(joint, angle)
                     # YOUR CODE HERE
