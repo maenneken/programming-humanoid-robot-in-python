@@ -43,6 +43,8 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
             R+=[0,1,0]
         if('Yaw' in joint_name): #z-Rotation
             R+=[0,0,1]
+        if('RHipYawPitch'==joint_name):
+            R=[0,1,-1]
         return R
 
     def getJacobian(self,chain,dT):
@@ -54,6 +56,100 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
             J[:,i] = np.cross(R,np.asarray(dT[:,i].T)[0])
         return J
 
+    def possibleAngle(self,theta,chain):
+        i=0;
+        for joint_name in chain:
+                #Head
+                if(joint_name=='HeadYaw'):
+                    if(theta[i]<-2.0857):
+                        theta[i]=-2.0857
+                    if(theta[i]>2.0857):
+                        theta[i]=2.0857
+                if(joint_name=='HeadPitch'):
+                    if(theta[i]<-0.6720):
+                        theta[i]=-0.6720
+                    if(theta[i]>0.5149):
+                        theta[i]=0.5149
+                #Arms
+                if('ShoulderPitch' in joint_name):
+                    if(theta[i]<-2.0857):
+                        theta[i]=-2.0857
+                    if(theta[i]>2.0857):
+                        theta[i]=2.0857
+                if('RShoulderRoll'==joint_name):
+                    if(theta[i]<-0.3142):
+                        theta[i]=-0.3142
+                    if(theta[i]>1.3265):
+                        theta[i]=1.3265
+                if('LShoulderRoll'==joint_name):
+                    if(theta[i]<-1.3265):
+                        theta[i]=-1.3265
+                    if(theta[i]>0.3142):
+                        theta[i]=0.3142
+                if('ElbowYaw'in joint_name):
+                    if(theta[i]<-2.0857):
+                        theta[i]=-2.0857
+                    if(theta[i]>2.0857):
+                        theta[i]=2.0857
+                if('RElbowRoll'==joint_name):
+                    if(theta[i]>6.2832):
+                        theta[i]=0.0349
+                    if(0.0349>theta[i]>1.5446):
+                        theta[i]=1.5446
+                if('LElbowRoll'==joint_name):
+                    if(theta[i]<0.0349):
+                        theta[i]=0.0349
+                    if(theta[i]>1.5446):
+                        theta[i]=1.5446
+                #Legs
+                if('HipYawPitch'in joint_name):
+                    if(theta[i]<-1.45303):
+                        theta[i]=-1.45303
+                    if(theta[i]>0.740810):
+                        theta[i]=0.740810
+                if('LHipRoll'==joint_name):
+                    if(theta[i]<-0.379472):
+                        theta[i]=-0.379472
+                    if(theta[i]>0.790477):
+                        theta[i]=0.790477
+                if('RHipRoll'==joint_name):
+                    if(theta[i]<-0.790477):
+                        theta[i]=-0.790477
+                    if(theta[i]>0.379472):
+                        theta[i]=0.379472
+                if('HipPitch'in joint_name):
+                    if(theta[i]<-1.535889):
+                        theta[i]=-1.535889
+                    if(theta[i]>0.484090):
+                        theta[i]=0.484090
+                if('LKneePitch'== joint_name):
+                    if(theta[i]<-0.092346):
+                        theta[i]=-0.092346
+                    if(theta[i]>2.112528):
+                        theta[i]=2.112528
+                if('RKneePitch'== joint_name):
+                    if(theta[i]<-0.103083):
+                        theta[i]=-0.103083
+                    if(theta[i]>2.120198):
+                        theta[i]=2.120198
+                if('AnklePitch'in joint_name):
+                    if(theta[i]<-1.89516):
+                        theta[i]=-1.89516
+                    if(theta[i]>0.922747):
+                        theta[i]=0.922747
+                if('LAnkleRoll'==joint_name):
+                    if(theta[i]<-0.397880):
+                        theta[i]=-0.397880
+                    if(theta[i]>0.769001):
+                        theta[i]=0.769001
+                if('RAnkleRoll'==joint_name):
+                    if(theta[i]<-0.768992):
+                        theta[i]=-0.768992
+                    if(theta[i]>0.397935):
+                        theta[i]=0.397935
+                i+=1
+
+        return theta
 
     def inverse_kinematics(self, effector_name, transform):
         '''solve the inverse kinematics
@@ -63,14 +159,14 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
         :return: list of joint angles
         '''
         chain=self.chains.get(effector_name)
-        theta = np.random.random(len(chain)) * 1e-5
+        theta = np.zeros(len(chain))
         lambda_ = 1
         max_step = 0.1
         joint_angles = []
         joints={}
         Toffset=self.getTe(effector_name)
 
-        for i in range(1000):
+        for i in range(10000):
             for i in range(len(chain)):
                 joints[chain[i]]=theta[i]
             self.forward_kinematics(joints)
@@ -83,6 +179,7 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
             J = self.getJacobian(chain,dT)
             d_theta = lambda_ * pinv(J) * e
             theta += np.asarray(d_theta.T)[0]
+            theta=self.possibleAngle(theta,chain)
             if  np.linalg.norm(d_theta) < 1e-4:
                 break
 
@@ -107,8 +204,9 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
 if __name__ == '__main__':
     agent = InverseKinematicsAgent()
     # test inverse kinematics
-    T = identity(4)
-    T[-1, 1] = 0.05
-    T[-1, 2] = 0.26
-    agent.set_transforms('LLeg', T)
+    T = identity(4) #coordinates are global
+    T[-1,0]= 0 # x in mm
+    T[-1, 1] = 120 #y in mm
+    T[-1, 2] = 0#z in mm
+    agent.set_transforms('LArm', T)
     agent.run()
