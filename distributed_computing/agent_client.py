@@ -8,6 +8,11 @@
 
 import weakref
 
+import requests
+import json
+import xmlrpc.client
+from keyframes import hello
+from numpy.matlib import identity
 class PostHandler(object):
     '''the post hander wraps function to be excuted in paralle
     '''
@@ -26,14 +31,15 @@ class PostHandler(object):
 class ClientAgent(object):
     '''ClientAgent request RPC service from remote server
     '''
-    # YOUR CODE HERE
+
     def __init__(self):
         self.post = PostHandler(self)
-    
+
     def get_angle(self, joint_name):
         '''get sensor value of given joint'''
-        # YOUR CODE HERE
-    
+
+
+
     def set_angle(self, joint_name, angle):
         '''set target angle of joint for PID controller
         '''
@@ -61,6 +67,13 @@ class ClientAgent(object):
 
 if __name__ == '__main__':
     agent = ClientAgent()
-    # TEST CODE HERE
-
-
+    s = xmlrpc.client.ServerProxy('http://localhost:9000')
+    print(s.get_posture())
+    print(s.set_angle('HeadYaw',-1))
+    print(s.get_angle('HeadYaw'))
+    print(s.execute_keyframes(hello()))
+    T = identity(4) #coordinates are global
+    T[-1,0]= 0 # x in mm
+    T[-1, 1] = 120 #y in mm
+    T[-1, 2] = 0#z in mm
+    #print(s.set_transform('LArm', T))
