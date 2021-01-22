@@ -16,6 +16,8 @@ import os
 import sys
 import threading
 from numpy.matlib import identity
+import numpy as np
+import time
 from xmlrpc.server import SimpleXMLRPCServer
 from xmlrpc.server import SimpleXMLRPCRequestHandler
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'kinematics'))
@@ -50,17 +52,24 @@ class ServerAgent(InverseKinematicsAgent,ForwardKinematicsAgent,PostureRecogniti
         e.g. return until keyframes are executed'''
         self.keyframes=keyframes
         self.start_time=0
+        times=keyframes[1]
+        t=0
+        for i in range(len(times)):
+            tmp=max(times[i])
+            if(tmp>t):
+                t=tmp
+        time.sleep(t)
         return 'done'
 
     def get_transform(self, name):
         '''get transform with given name'''
-        return self.transforms[name]
+        return self.transforms[name].tolist()
 
 
     def set_transform(self, effector_name, transform):
         '''solve the inverse kinematics and control joints use the results
         '''
-        self.set_transforms(effector_name, transform)
+        self.set_transforms(effector_name, np.asmatrix(transform))
         return 'done'
 
 

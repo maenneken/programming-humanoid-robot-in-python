@@ -33,47 +33,52 @@ class ClientAgent(object):
     '''
 
     def __init__(self):
+        self.server = xmlrpc.client.ServerProxy('http://localhost:9000')
         self.post = PostHandler(self)
 
     def get_angle(self, joint_name):
         '''get sensor value of given joint'''
-
+        return self.server.get_angle(joint_name)
 
 
     def set_angle(self, joint_name, angle):
         '''set target angle of joint for PID controller
         '''
-        # YOUR CODE HERE
+        return self.server.set_angle(joint_name,angle)
 
     def get_posture(self):
         '''return current posture of robot'''
-        # YOUR CODE HERE
+        return self.server.get_posture()
 
     def execute_keyframes(self, keyframes):
         '''excute keyframes, note this function is blocking call,
         e.g. return until keyframes are executed
         '''
-        # YOUR CODE HERE
+        return self.server.execute_keyframes(keyframes)
 
     def get_transform(self, name):
         '''get transform with given name
         '''
-        # YOUR CODE HERE
+        return self.server.get_transform(name)
 
     def set_transform(self, effector_name, transform):
         '''solve the inverse kinematics and control joints use the results
         '''
-        # YOUR CODE HERE
+        return self.server.set_transform( effector_name, transform)
 
 if __name__ == '__main__':
     agent = ClientAgent()
-    s = xmlrpc.client.ServerProxy('http://localhost:9000')
-    print(s.get_posture())
-    print(s.set_angle('HeadYaw',-1))
-    print(s.get_angle('HeadYaw'))
-    print(s.execute_keyframes(hello()))
-    T = identity(4) #coordinates are global
-    T[-1,0]= 0 # x in mm
-    T[-1, 1] = 120 #y in mm
-    T[-1, 2] = 0#z in mm
-    #print(s.set_transform('LArm', T))
+
+    print(agent.get_posture())
+    print(agent.set_angle('HeadYaw',-1))
+    print(agent.get_angle('HeadYaw'))
+    print(agent.get_transform('HeadYaw'))
+    print(agent.execute_keyframes(hello()))
+    T = [[1,0,0,0],
+        [0,1,0,0],
+        [0,0,1,0],
+        [0,0,0,1]] #coordinates are global
+    T[-1][0]= 0 # x in mm
+    T[-1][1] = 120 #y in mm
+    T[-1][2] = 0#z in mm
+    print(agent.set_transform('LArm', T))
