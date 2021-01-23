@@ -46,6 +46,11 @@ class ServerAgent(InverseKinematicsAgent,ForwardKinematicsAgent,PostureRecogniti
         '''return current posture of robot'''
         return self.posture
 
+    def execute_keyframes_parallel(self,names,times,keys):
+        '''had to add this function because threading args dont like keyframes'''
+        keyframes=(names,times,keys)
+        self.execute_keyframes(keyframes)
+
 
     def execute_keyframes(self, keyframes):
         '''excute keyframes, note this function is blocking call,
@@ -58,8 +63,7 @@ class ServerAgent(InverseKinematicsAgent,ForwardKinematicsAgent,PostureRecogniti
             tmp=max(times[i])
             if(tmp>t):
                 t=tmp
-        time.sleep(t)
-        return 'done'
+        time.sleep(t+1)
 
     def get_transform(self, name):
         '''get transform with given name'''
@@ -70,7 +74,6 @@ class ServerAgent(InverseKinematicsAgent,ForwardKinematicsAgent,PostureRecogniti
         '''solve the inverse kinematics and control joints use the results
         '''
         self.set_transforms(effector_name, np.asmatrix(transform))
-        return 'done'
 
 
 

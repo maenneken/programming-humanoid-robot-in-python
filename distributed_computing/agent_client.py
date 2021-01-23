@@ -7,9 +7,10 @@
 '''
 
 import weakref
-
+import threading
 import requests
 import json
+import time
 import xmlrpc.client
 from keyframes import hello
 from numpy.matlib import identity
@@ -18,15 +19,17 @@ class PostHandler(object):
     '''
     def __init__(self, obj):
         self.proxy = weakref.proxy(obj)
-
     def execute_keyframes(self, keyframes):
         '''non-blocking call of ClientAgent.execute_keyframes'''
-        # YOUR CODE HERE
+        server = xmlrpc.client.ServerProxy('http://localhost:9000')
+        thread = threading.Thread(target = server.execute_keyframes_parallel, args=(keyframes))
+        thread.start()
 
     def set_transform(self, effector_name, transform):
         '''non-blocking call of ClientAgent.set_transform'''
-        # YOUR CODE HERE
-
+        server = xmlrpc.client.ServerProxy('http://localhost:9000')
+        thread = threading.Thread(target = server.set_transform,args=(effector_name,transform))
+        thread.start()
 
 class ClientAgent(object):
     '''ClientAgent request RPC service from remote server
@@ -50,11 +53,17 @@ class ClientAgent(object):
         '''return current posture of robot'''
         return self.server.get_posture()
 
+    def execute_keyframes_parallel(self, names,times,keys):
+        '''had to add this function because threading dosnt like keyframes as args
+        '''
+
+        return self.server.execute_keyframes_parallel(names,times,keys)
+
     def execute_keyframes(self, keyframes):
         '''excute keyframes, note this function is blocking call,
         e.g. return until keyframes are executed
         '''
-        return self.server.execute_keyframes(keyframes)
+        self.server.execute_keyframes(keyframes)
 
     def get_transform(self, name):
         '''get transform with given name
@@ -64,16 +73,17 @@ class ClientAgent(object):
     def set_transform(self, effector_name, transform):
         '''solve the inverse kinematics and control joints use the results
         '''
-        return self.server.set_transform( effector_name, transform)
+        self.server.set_transform(effector_name, transform)
 
 if __name__ == '__main__':
     agent = ClientAgent()
-
+    agent.post.execute_keyframes(hello())
     print(agent.get_posture())
     print(agent.set_angle('HeadYaw',-1))
     print(agent.get_angle('HeadYaw'))
     print(agent.get_transform('HeadYaw'))
-    print(agent.execute_keyframes(hello()))
+    agent.post.execute_keyframes(hello())
+    print("hello send")
     T = [[1,0,0,0],
         [0,1,0,0],
         [0,0,1,0],
@@ -81,4 +91,5 @@ if __name__ == '__main__':
     T[-1][0]= 0 # x in mm
     T[-1][1] = 120 #y in mm
     T[-1][2] = 0#z in mm
-    print(agent.set_transform('LArm', T))
+    agent.post.set_transform('LArm', T)
+    print("all send")
